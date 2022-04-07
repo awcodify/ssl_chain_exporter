@@ -38,7 +38,7 @@ func newSSLChainCollector(opts *SSLOptions, logger log.Logger) *sslChainCollecto
 		up: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "", "up"),
 			"Could the server be reached",
-			nil,
+			[]string{"domain"},
 			nil,
 		),
 		expiry: prometheus.NewDesc(
@@ -69,13 +69,14 @@ func (collector *sslChainCollector) Describe(ch chan<- *prometheus.Desc) {
 func (collector *sslChainCollector) Collect(ch chan<- prometheus.Metric) {
 	for _, opt := range collector.sslOptions.Options {
 		conn, err := tls.DialWithDialer(&net.Dialer{Timeout: 2 * time.Second}, "tcp", opt.Domain+":443", nil)
-
 		if err != nil {
 			// make status down
-			ch <- prometheus.MustNewConstMetric(collector.up, prometheus.GaugeValue, 0)
+			ch <- prometheus.MustNewConstMetric(collector.up, prometheus.GaugeValue, 0, opt.Domain)
 			// increase error counter
+
+			level.Info(collector.logger).Log("masukin: " + opt.Domain)
 			collector.scrapeErrorTotal.WithLabelValues(opt.Domain).Inc()
-			collector.scrapeErrorTotal.Collect(ch)
+			collector.scrapeErrorTotal.WithLabelValues(opt.Domain).Collect(ch)
 
 			level.Info(collector.logger).Log(opt.Domain + " doesn't support SSL certificate err: " + err.Error())
 			continue
@@ -83,14 +84,14 @@ func (collector *sslChainCollector) Collect(ch chan<- prometheus.Metric) {
 
 		err = conn.VerifyHostname(opt.Domain)
 		if err != nil {
-			ch <- prometheus.MustNewConstMetric(collector.up, prometheus.GaugeValue, 0)
+			ch <- prometheus.MustNewConstMetric(collector.up, prometheus.GaugeValue, 0, opt.Domain)
 
 			level.Info(collector.logger).Log("Hostname doesn't match with certificate: " + err.Error())
 			continue
 		}
 
 		// success connect with TLS, then make status become UP (1)
-		ch <- prometheus.MustNewConstMetric(collector.up, prometheus.GaugeValue, 1)
+		ch <- prometheus.MustNewConstMetric(collector.up, prometheus.GaugeValue, 1, opt.Domain)
 
 		collector.collect(conn, opt, ch)
 	}
