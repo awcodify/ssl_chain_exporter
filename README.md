@@ -1,8 +1,8 @@
 
 # SSL Chain Exporter for Prometheus
 
-[![GitHub release](https://img.shields.io/github/release/awcodify/ssl_chain_exporter.svg)][release]
-![GitHub Downloads](https://img.shields.io/github/downloads/awcodify/ssl_chain_exporter/total.svg)
+[![GitHub release](https://img.shields.io/github/release/awcodify/ssl_chain_exporter.svg?style=for-the-badge)][release]
+![GitHub Downloads](https://img.shields.io/github/downloads/awcodify/ssl_chain_exporter/total.svg?style=for-the-badge)
 
 Help on flags:
 
