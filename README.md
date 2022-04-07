@@ -23,6 +23,13 @@ Check your domains by runnning
 
 SSL Chain metrics:
 
+| Metric                                | Description                                                                       | Type    | Label                 |
+|---------------------------------------|-----------------------------------------------------------------------------------|---------|-----------------------|
+| ssl_chain_up                          | Is the provided domain can be reached or not.                                     | Gauge   | domain                |
+| ssl_chain_expiry                      | The date after which a peer certificate expires. Expressed as a Unix Epoch Time.  | Gauge   | domain, chain, issuer |
+| ssl_chain_exporter_scrape_error_total | Number of errors while scraping SSL chain.                                        | Counter | domain                |
+
+Sample:
 ```
 # HELP ssl_chain_collector_build_info A metric with a constant '1' value labeled by version, revision, branch, and goversion from which ssl_chain_collector was built.
 # TYPE ssl_chain_collector_build_info gauge
