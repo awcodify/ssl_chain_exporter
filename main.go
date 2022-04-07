@@ -7,8 +7,11 @@ import (
 	"strings"
 
 	// "github.com/prometheus/client_golang/prometheus"
-	"github.com/awcodify/ssl-chain-exporter/exporter"
+	"github.com/awcodify/ssl_chain_exporter/exporter"
+	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/promlog"
+	"github.com/prometheus/common/version"
 )
 
 type sslChainOpts struct {
@@ -34,13 +37,29 @@ func main() {
 		sslOpts.Options = append(sslOpts.Options, opt)
 	}
 
-	exporter.Register(&sslOpts)
+	promlogConfig := &promlog.Config{}
+	logger := promlog.New(promlogConfig)
+	exporter.Register(&sslOpts, logger)
+
+	level.Info(logger).Log("msg", "Starting ssl_chain_exporter", "version", version.Info())
+	level.Info(logger).Log("msg", "Build context", "build", version.BuildContext())
+	level.Info(logger).Log("msg", "Starting Server: ", "listen_address", *listenAddress)
+	level.Info(logger).Log("msg", "Collect from: ", "scrape_uri", *metricPath)
 
 	log.Fatal(serverMetrics(*listenAddress, *metricPath))
 }
 
 func serverMetrics(listenAddress, metricsPath string) error {
 	http.Handle(metricsPath, promhttp.Handler())
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`<html>
+			 <head><title>Apache Exporter</title></head>
+			 <body>
+			 <h1>Apache Exporter</h1>
+			 <p><a href='` + *&metricsPath + `'>Metrics</a></p>
+			 </body>
+			 </html>`))
+	})
 
 	return http.ListenAndServe(listenAddress, nil)
 }

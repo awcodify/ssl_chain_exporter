@@ -1,14 +1,18 @@
 package exporter
 
 import (
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/version"
 
 	"crypto/tls"
 	"fmt"
+	"net"
+	"time"
 )
 
-const prefix = "ssl_chain"
+const namespace = "ssl_chain"
 
 var peerCertificatesIndex = []string{"server", "intermediate", "root"}
 
@@ -21,56 +25,89 @@ type SSLOption struct {
 }
 
 type sslChainCollector struct {
-	expiry *prometheus.Desc
+	up               *prometheus.Desc
+	expiry           *prometheus.Desc
+	scrapeErrorTotal *prometheus.CounterVec
 
 	sslOptions SSLOptions
+	logger     log.Logger
 }
 
-func newSSLChainCollector(opts *SSLOptions) *sslChainCollector {
+func newSSLChainCollector(opts *SSLOptions, logger log.Logger) *sslChainCollector {
 	return &sslChainCollector{
+		up: prometheus.NewDesc(
+			prometheus.BuildFQName(namespace, "", "up"),
+			"Could the server be reached",
+			nil,
+			nil,
+		),
 		expiry: prometheus.NewDesc(
-			prometheus.BuildFQName(prefix, "", "expiry"),
+			prometheus.BuildFQName(namespace, "", "expiry"),
 			"expiration of certification",
 			[]string{"domain", "chain", "issuer"},
 			nil,
 		),
-
+		scrapeErrorTotal: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: namespace,
+				Name:      "exporter_scrape_error_total",
+				Help:      "Number of errors while scraping SSL chain.",
+			},
+			[]string{"domain"},
+		),
 		sslOptions: *opts,
+		logger:     logger,
 	}
 }
 
 func (collector *sslChainCollector) Describe(ch chan<- *prometheus.Desc) {
+	ch <- collector.up
 	ch <- collector.expiry
+	collector.scrapeErrorTotal.Describe(ch)
 }
 
 func (collector *sslChainCollector) Collect(ch chan<- prometheus.Metric) {
-
-	//for each descriptor or call other functions that do so.
 	for _, opt := range collector.sslOptions.Options {
+		conn, err := tls.DialWithDialer(&net.Dialer{Timeout: 2 * time.Second}, "tcp", opt.Domain+":443", nil)
 
-		conn, err := tls.Dial("tcp", opt.Domain+":443", nil)
 		if err != nil {
-			panic(opt.Domain + " doesn't support SSL certificate err: " + err.Error())
+			// make status down
+			ch <- prometheus.MustNewConstMetric(collector.up, prometheus.GaugeValue, 0)
+			// increase error counter
+			collector.scrapeErrorTotal.WithLabelValues(opt.Domain).Inc()
+			collector.scrapeErrorTotal.Collect(ch)
+
+			level.Info(collector.logger).Log(opt.Domain + " doesn't support SSL certificate err: " + err.Error())
+			continue
 		}
 
 		err = conn.VerifyHostname(opt.Domain)
 		if err != nil {
-			panic("Hostname doesn't match with certificate: " + err.Error())
+			ch <- prometheus.MustNewConstMetric(collector.up, prometheus.GaugeValue, 0)
+
+			level.Info(collector.logger).Log("Hostname doesn't match with certificate: " + err.Error())
+			continue
 		}
 
-		for id, chain := range peerCertificatesIndex {
-			expiry := conn.ConnectionState().PeerCertificates[id].NotAfter
-			issuer := fmt.Sprintf("%s", conn.ConnectionState().PeerCertificates[id].Issuer)
+		// success connect with TLS, then make status become UP (1)
+		ch <- prometheus.MustNewConstMetric(collector.up, prometheus.GaugeValue, 1)
 
-			ch <- prometheus.MustNewConstMetric(collector.expiry, prometheus.GaugeValue, float64(expiry.Unix()), opt.Domain, chain, issuer)
-		}
-
+		collector.collect(conn, opt, ch)
 	}
 }
 
-func Register(options *SSLOptions) {
-	collector := newSSLChainCollector(options)
-	prometheus.MustRegister(version.NewCollector("volume_exporter"))
+func (collector *sslChainCollector) collect(conn *tls.Conn, opt SSLOption, ch chan<- prometheus.Metric) {
+	for id, chain := range peerCertificatesIndex {
+		expiry := conn.ConnectionState().PeerCertificates[id].NotAfter
+		issuer := fmt.Sprintf("%s", conn.ConnectionState().PeerCertificates[id].Issuer)
+
+		ch <- prometheus.MustNewConstMetric(collector.expiry, prometheus.GaugeValue, float64(expiry.Unix()), opt.Domain, chain, issuer)
+	}
+}
+
+func Register(options *SSLOptions, logger log.Logger) {
+	collector := newSSLChainCollector(options, logger)
+	prometheus.MustRegister(version.NewCollector("ssl_chain_collector"))
 	prometheus.MustRegister(collector)
 	prometheus.Unregister(prometheus.NewGoCollector())
 }
