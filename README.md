@@ -17,7 +17,7 @@ Help on flags:
 
 Check your domains by runnning
 ```
-./ssl_chain_exporter --domains=github.com,gist.github.com
+./ssl_chain_exporter --domains=github.com,gist.github.com --web.listen-address=0.0.0.0:9102
 ```
 ## Collectors
 
