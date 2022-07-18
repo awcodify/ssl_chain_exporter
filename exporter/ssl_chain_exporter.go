@@ -73,8 +73,6 @@ func (collector *sslChainCollector) Collect(ch chan<- prometheus.Metric) {
 			// make status down
 			ch <- prometheus.MustNewConstMetric(collector.up, prometheus.GaugeValue, 0, opt.Domain)
 			// increase error counter
-
-			level.Info(collector.logger).Log("masukin: " + opt.Domain)
 			collector.scrapeErrorTotal.WithLabelValues(opt.Domain).Inc()
 			collector.scrapeErrorTotal.WithLabelValues(opt.Domain).Collect(ch)
 
