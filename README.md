@@ -10,7 +10,7 @@ Help on flags:
   -domains string
         Which domain will be collected. Comma separated.
   -domains-from-csv string
-        Which domain will be collected from csv file
+        Which domain will be collected from csv file. Header required.
   -web.listen-address string
         Address to listen on for web interface. (default ":9102")
   -web.metrics-path string
@@ -25,7 +25,7 @@ CGO_ENABLED=0 go build
 
 Check your domains by runnning
 ```
-./ssl_chain_exporter --domains=www.detik.com,www.kompas.com
+./ssl_chain_exporter --domains=github.com,gist.github.com
 ./ssl_chain_exporter --domains-from-csv=list-domains.csv
 ```
 ## Collectors
