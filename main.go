@@ -1,9 +1,13 @@
 package main
 
 import (
+	"encoding/csv"
 	"flag"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	// "github.com/prometheus/client_golang/prometheus"
@@ -19,15 +23,50 @@ type sslChainOpts struct {
 }
 
 var (
-	listenAddress = flag.String("web.listen-address", ":9102", "Address to listen on for web interface.")
-	metricPath    = flag.String("web.metrics-path", "/metrics", "Path under which to expose metrics.")
-	domains       = flag.String("domains", "", "Which domain will be collected. Comma separated.")
+	listenAddress  = flag.String("web.listen-address", ":9102", "Address to listen on for web interface.")
+	metricPath     = flag.String("web.metrics-path", "/metrics", "Path under which to expose metrics.")
+	domains        = flag.String("domains", "", "Which domain will be collected. Comma separated.")
+	domainsFromCSV = flag.String("domains-from-csv", "", "Which domain will be collected from csv file. Header required.")
 )
 
+func readDomainListFromFile(filePath string) []string {
+	// parse domains param from file to array
+	// open file
+	f, err := os.Open(filePath)
+	if err != nil {
+		log.Fatal(err)
+		return nil
+	}
+	// remember to close the file at the end of the program
+	defer f.Close()
+
+	// read csv values using csv.Reader
+	var domainList []string
+	csvReader := csv.NewReader(f)
+	records, err := csvReader.ReadAll()
+	// skip the header row
+	for _, r := range records[1:] {
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		domainList = append(domainList, r[0])
+	}
+	return domainList
+}
 func main() {
 	flag.Parse()
-	domainList := strings.Split(*domains, ",")
-
+	var domainList []string
+	if *domainsFromCSV != "" {
+		fmt.Println("Reading domains from file")
+		domainList = readDomainListFromFile(*domainsFromCSV)
+	} else {
+		fmt.Println("Reading domains from command line")
+		// parse domains param to array
+		domainList = strings.Split(*domains, ",")
+	}
 	sslOpts := exporter.SSLOptions{}
 	for _, domain := range domainList {
 		opt := exporter.SSLOption{
