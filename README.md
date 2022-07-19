@@ -20,7 +20,7 @@ Help on flags:
 Build your binary
 ```
 go mod tidy
-go build
+CGO_ENABLED=0 go build
 ```
 
 Check your domains by runnning
