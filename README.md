@@ -25,7 +25,7 @@ CGO_ENABLED=0 go build
 
 Check your domains by runnning
 ```
-./ssl_chain_exporter --domains=hijra.id,alamisharia.co.id
+./ssl_chain_exporter --domains=www.detik.com,www.kompas.com
 ./ssl_chain_exporter --domains-from-file=list-domains.csv
 ```
 ## Collectors
