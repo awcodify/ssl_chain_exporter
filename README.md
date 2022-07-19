@@ -1,7 +1,7 @@
 
 # SSL Chain Exporter for Prometheus
 
-[![GitHub release](https://img.shields.io/github/release/awcodify/ssl_chain_exporter.svg?style=for-the-badge)][release]
+![GitHub release](https://img.shields.io/github/release/awcodify/ssl_chain_exporter.svg?style=for-the-badge)
 ![GitHub Downloads](https://img.shields.io/github/downloads/awcodify/ssl_chain_exporter/total.svg?style=for-the-badge)
 
 Help on flags:
@@ -62,4 +62,3 @@ ssl_chain_up{domain="hasldklaskdlaslda.asa"} 0
 ## Debugging
 
 1. if /metrics cannot be access check your domain name list
-[release]: https://github.com/awcodify/ssl_chain_exporter/releases/latest
