@@ -9,8 +9,8 @@ Help on flags:
 <pre>
   -domains string
         Which domain will be collected. Comma separated.
-  -domains-from-file string
-        Which domain will be collected from file. Comma separated.
+  -domains-from-csv string
+        Which domain will be collected from csv file
   -web.listen-address string
         Address to listen on for web interface. (default ":9102")
   -web.metrics-path string
@@ -26,7 +26,7 @@ CGO_ENABLED=0 go build
 Check your domains by runnning
 ```
 ./ssl_chain_exporter --domains=www.detik.com,www.kompas.com
-./ssl_chain_exporter --domains-from-file=list-domains.csv
+./ssl_chain_exporter --domains-from-csv=list-domains.csv
 ```
 ## Collectors
 

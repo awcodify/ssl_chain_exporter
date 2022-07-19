@@ -23,10 +23,10 @@ type sslChainOpts struct {
 }
 
 var (
-	listenAddress   = flag.String("web.listen-address", ":9102", "Address to listen on for web interface.")
-	metricPath      = flag.String("web.metrics-path", "/metrics", "Path under which to expose metrics.")
-	domains         = flag.String("domains", "", "Which domain will be collected. Comma separated.")
-	domainsFromFile = flag.String("domains-from-file", "", "Which domain will be collected from file. Comma separated.")
+	listenAddress  = flag.String("web.listen-address", ":9102", "Address to listen on for web interface.")
+	metricPath     = flag.String("web.metrics-path", "/metrics", "Path under which to expose metrics.")
+	domains        = flag.String("domains", "", "Which domain will be collected. Comma separated.")
+	domainsFromCSV = flag.String("domains-from-csv", "", "Which domain will be collected from file. Comma separated.")
 )
 
 func readDomainListFromFile(filePath string) []string {
@@ -59,9 +59,9 @@ func readDomainListFromFile(filePath string) []string {
 func main() {
 	flag.Parse()
 	var domainList []string
-	if *domainsFromFile != "" {
+	if *domainsFromCSV != "" {
 		fmt.Println("Reading domains from file")
-		domainList = readDomainListFromFile(*domainsFromFile)
+		domainList = readDomainListFromFile(*domainsFromCSV)
 	} else {
 		fmt.Println("Reading domains from command line")
 		// parse domains param to array
