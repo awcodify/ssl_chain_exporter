@@ -9,15 +9,24 @@ Help on flags:
 <pre>
   -domains string
         Which domain will be collected. Comma separated.
+  -domains-from-file string
+        Which domain will be collected from file. Comma separated.
   -web.listen-address string
         Address to listen on for web interface. (default ":9102")
   -web.metrics-path string
         Path under which to expose metrics. (default "/metrics")
 </pre>
 
+Build your binary
+```
+go mod tidy
+go build
+```
+
 Check your domains by runnning
 ```
-./ssl_chain_exporter --domains=github.com,gist.github.com --web.listen-address=0.0.0.0:9102
+./ssl_chain_exporter --domains=hijra.id,alamisharia.co.id
+./ssl_chain_exporter --domains-from-file=list-domains.csv
 ```
 ## Collectors
 
@@ -50,4 +59,7 @@ ssl_chain_up{domain="google.co.id"} 1
 ssl_chain_up{domain="hasldklaskdlaslda.asa"} 0
 ```
 
+## Debugging
+
+1. if /metrics cannot be access check your domain name list
 [release]: https://github.com/awcodify/ssl_chain_exporter/releases/latest
