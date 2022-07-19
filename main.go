@@ -26,7 +26,7 @@ var (
 	listenAddress  = flag.String("web.listen-address", ":9102", "Address to listen on for web interface.")
 	metricPath     = flag.String("web.metrics-path", "/metrics", "Path under which to expose metrics.")
 	domains        = flag.String("domains", "", "Which domain will be collected. Comma separated.")
-	domainsFromCSV = flag.String("domains-from-csv", "", "Which domain will be collected from file. Comma separated.")
+	domainsFromCSV = flag.String("domains-from-csv", "", "Which domain will be collected from csv file. Header required.")
 )
 
 func readDomainListFromFile(filePath string) []string {
