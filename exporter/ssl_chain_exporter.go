@@ -97,8 +97,8 @@ func (collector *sslChainCollector) Collect(ch chan<- prometheus.Metric) {
 
 func (collector *sslChainCollector) collect(conn *tls.Conn, opt SSLOption, ch chan<- prometheus.Metric) {
 	for id, chain := range peerCertificatesIndex {
-		expiry := conn.ConnectionState().PeerCertificates[id].NotAfter
-		issuer := fmt.Sprintf("%s", conn.ConnectionState().PeerCertificates[id].Issuer)
+		expiry := conn.ConnectionState().VerifiedChains[0][id].NotAfter
+		issuer := fmt.Sprintf("%s", conn.ConnectionState().VerifiedChains[0][id].Issuer)
 
 		ch <- prometheus.MustNewConstMetric(collector.expiry, prometheus.GaugeValue, float64(expiry.Unix()), opt.Domain, chain, issuer)
 	}
